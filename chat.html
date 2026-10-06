@@ -74,7 +74,7 @@
 
     <script>
         const SUPABASE_URL = 'https://vjmdwaaopgejmlxwckee.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_YE_zgqG5_HOKDon3egg1HQ_LTYd9...';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqbWR3YWFvcGdlam1seHdja2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjIxMzYsImV4cCI6MjEwNjgzODEzNn0.cZ88A9696y8h_edO8tLMgQcQWhhWk1ScRCfptx1bU9A';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
@@ -82,7 +82,6 @@
         let allProfiles = [];
         let messageSubscription = null;
         let localStream = null;
-        let peerConnection = null;
 
         async function init() {
             const { data: { user }, error } = await supabase.auth.getUser();
