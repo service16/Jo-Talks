@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jo-Talks - Sign In</title>
+    <title>Jo-Talks - Sign In / Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -19,10 +19,6 @@
             <div id="username-field" class="hidden space-y-1">
                 <label class="text-xs font-semibold text-slate-400">Username</label>
                 <input type="text" id="username" placeholder="johndoe" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition text-white">
-            </div>
-            <div id="tag-field" class="hidden space-y-1">
-                <label class="text-xs font-semibold text-slate-400">Tag</label>
-                <input type="text" id="tag" placeholder="#0001" value="#0001" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition text-white">
             </div>
             <div class="space-y-1">
                 <label class="text-xs font-semibold text-slate-400">Email Address</label>
@@ -42,7 +38,7 @@
 
     <script>
         const SUPABASE_URL = 'https://vjmdwaaopgejmlxwckee.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_YE_zgqG5_HOKDon3egg1HQ_LTYd9...';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqbWR3YWFvcGdlam1seHdja2VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjIxMzYsImV4cCI6MjEwNjgzODEzNn0.cZ88A9696y8h_edO8tLMgQcQWhhWk1ScRCfptx1bU9A';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let isSignUp = false;
@@ -53,7 +49,6 @@
             document.getElementById('submit-btn').innerText = isSignUp ? 'Create Account' : 'Sign In';
             document.getElementById('toggle-btn').innerText = isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one";
             document.getElementById('username-field').classList.toggle('hidden', !isSignUp);
-            document.getElementById('tag-field').classList.toggle('hidden', !isSignUp);
         }
 
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
@@ -66,8 +61,6 @@
             try {
                 if (isSignUp) {
                     const username = document.getElementById('username').value.trim();
-                    const tag = document.getElementById('tag').value.trim() || '#0001';
-                    
                     if (!username) {
                         alert('Please enter a username.');
                         btn.disabled = false;
@@ -78,7 +71,7 @@
                         email, 
                         password,
                         options: { 
-                            data: { username, tag } 
+                            data: { username, tag: '#0001' } 
                         }
                     });
 
