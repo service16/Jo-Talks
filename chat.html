@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jo-Talks - Chat & Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-900 text-white flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <div class="w-80 border-r border-gray-800 flex flex-col bg-gray-950">
+        <div class="p-4 border-b border-gray-800 flex items-center justify-between">
+            <span id="current-user-label" class="font-bold text-indigo-400 truncate text-sm">Loading...</span>
+            <div class="flex items-center gap-2">
+                <button id="admin-btn" onclick="openAdminModal()" class="hidden text-xs bg-purple-600 px-2 py-1 rounded hover:bg-purple-500">Admin</button>
+                <button onclick="logout()" class="text-gray-400 hover:text-red-400"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+
+        <!-- Search Users -->
+        <div class="p-3 border-b border-gray-800 relative">
+            <div class="flex items-center bg-gray-900 rounded px-3 py-1.5 border border-gray-800">
+                <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
+                <input type="text" id="search-input" placeholder="Search username..." oninput="searchUsers(this.value)" class="bg-transparent focus:outline-none text-xs w-full text-white">
+            </div>
+            <div id="search-results" class="absolute left-3 right-3 mt-1 bg-gray-900 border border-gray-800 rounded shadow-lg z-10 hidden"></div>
+        </div>
+
+        <!-- Friends List -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-1">
+            <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Friends</h3>
+            <div id="friends-list" class="space-y-1"></div>
+        </div>
+    </div>
+
+    <!-- MAIN CHAT PANEL -->
+    <div class="flex-1 flex flex-col" id="chat-panel">
+        <div id="no-chat-selected" class="flex-1 flex items-center justify-center text-gray-500 text-sm">
+            Select a friend from the sidebar to start chatting.
+        </div>
+        <div id="active-chat-container" class="hidden flex-1 flex flex-col">
+            <div class="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-950">
+                <div class="flex items-center">
+                    <h2 id="chat-friend-name" class="font-semibold text-base">@friend</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="startCall('video')" class="p-2 bg-gray-800 hover:bg-gray-700 rounded-full text-indigo-400"><i data-lucide="video" class="w-5 h-5"></i></button>
+                    <button onclick="startCall('audio')" class="p-2 bg-gray-800 hover:bg-gray-700 rounded-full text-indigo-400"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                    <button onclick="blockCurrentFriend()" class="px-3 py-1.5 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-xs rounded">Block</button>
+                    <button onclick="reportCurrentFriend()" class="p-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-400 hover:text-red-400"><i data-lucide="shield-alert" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+            
+            <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+
+            <form id="message-form" onsubmit="sendMessage(event)" class="p-4 border-t border-gray-800 bg-gray-950 flex gap-2">
+                <input type="text" id="message-input" placeholder="Type a message..." required class="flex-1 bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded text-sm font-medium"><i data-lucide="send" class="w-4 h-4"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL PORTAL -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 border border-gray-800 w-[600px] h-[80vh] rounded-xl flex flex-col p-6 shadow-2xl">
+            <div class="flex justify-between items-center pb-4 border-b border-gray-800">
+                <h3 class="text-lg font-bold text-purple-400">Admin Moderation Portal</h3>
+                <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div class="flex-1 overflow-y-auto py-4 space-y-4">
+                <h4 class="text-xs font-semibold uppercase text-gray-400">User Reports</h4>
+                <div id="admin-reports-list" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let selectedFriend = null;
+
+        async function init() {
+            lucide.createIcons();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { window.location.href = 'index.html'; return; }
+            currentUser = user;
+
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            document.getElementById('current-user-label').innerText = `@${profile.username} ${profile.tag || ''}`;
+
+            // Check if user is admin (e.g. check email or specific admin flag)
+            if (profile.is_admin || user.email === 'admin@yourdomain.com') {
+                document.getElementById('admin-btn').classList.remove('hidden');
+            }
+
+            fetchFriends();
+        }
+
+        async function fetchFriends() {
+            const { data } = await supabase.from('friendships').select('*').or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`).eq('status', 'accepted');
+            const listEl = document.getElementById('friends-list');
+            listEl.innerHTML = '';
+            if (!data) return;
+
+            for (let f of data) {
+                const friendId = f.user_id === currentUser.id ? f.friend_id : f.user_id;
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', friendId).single();
+                if (profile) {
+                    listEl.innerHTML += `
+                        <div onclick="selectFriend('${profile.id}', '${profile.username}')" class="flex items-center p-2 rounded cursor-pointer hover:bg-gray-900 transition">
+                            <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-xs mr-2">${profile.username[0].toUpperCase()}</div>
+                            <span class="text-sm font-medium">@${profile.username}</span>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        async function searchUsers(query) {
+            const resultsEl = document.getElementById('search-results');
+            if (!query.trim()) { resultsEl.classList.add('hidden'); return; }
+            const { data } = await supabase.from('profiles').select('*').ilike('username', `%${query}%`).limit(5);
+            resultsEl.innerHTML = '';
+            if (data && data.length > 0) {
+                resultsEl.classList.remove('hidden');
+                data.forEach(u => {
+                    if (u.id !== currentUser.id) {
+                        resultsEl.innerHTML += `
+                            <div class="flex items-center justify-between p-2 hover:bg-gray-800 border-b border-gray-800 last:border-none text-xs">
+                                <span>@${u.username}</span>
+                                <button onclick="sendFriendRequest('${u.id}')" class="px-2 py-1 bg-indigo-600 rounded">Add</button>
+                            </div>
+                        `;
+                    }
+                });
+            } else { resultsEl.classList.add('hidden'); }
+        }
+
+        async function sendFriendRequest(friendId) {
+            const { error } = await supabase.from('friendships').insert({ user_id: currentUser.id, friend_id: friendId, status: 'pending' });
+            if (error) alert('Already requested or friends!');
+            else alert('Friend request sent!');
+        }
+
+        function selectFriend(id, username) {
+            selectedFriend = { id, username };
+            document.getElementById('no-chat-selected').classList.add('hidden');
+            document.getElementById('active-chat-container').classList.remove('hidden');
+            document.getElementById('chat-friend-name').innerText = `@${username}`;
+            loadMessages();
+        }
+
+        async function loadMessages() {
+            const { data } = await supabase.from('messages').select('*').or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${selectedFriend.id}),and(sender_id.eq.${selectedFriend.id},receiver_id.eq.${currentUser.id})`).order('created_at', { ascending: true });
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+            if (data) {
+                data.forEach(m => {
+                    const isMe = m.sender_id === currentUser.id;
+                    container.innerHTML += `<div class="flex ${isMe ? 'justify-end' : 'justify-start'}"><div class="max-w-xs px-4 py-2 rounded-lg text-sm ${isMe ? 'bg-indigo-600' : 'bg-gray-800'}">${m.content}</div></div>`;
+                });
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            const content = document.getElementById('message-input').value;
+            if (!content || !selectedFriend) return;
+            await supabase.from('messages').insert({ sender_id: currentUser.id, receiver_id: selectedFriend.id, content });
+            document.getElementById('message-input').value = '';
+            loadMessages();
+        }
+
+        async function blockCurrentFriend() {
+            if (confirm('Block this user?')) {
+                await supabase.from('friendships').update({ status: 'blocked' }).eq('friend_id', selectedFriend.id);
+                location.reload();
+            }
+        }
+
+        async function reportCurrentFriend() {
+            const reason = prompt('Reason for reporting:');
+            if (reason) {
+                await supabase.from('reports').insert({ reporter_id: currentUser.id, reported_user_id: selectedFriend.id, reason });
+                alert('Report submitted to admin.');
+            }
+        }
+
+        async function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+            const { data } = await supabase.from('reports').select('*');
+            const list = document.getElementById('admin-reports-list');
+            list.innerHTML = data && data.length ? '' : '<p class="text-xs text-gray-500">No reports found.</p>';
+            if (data) {
+                data.forEach(r => {
+                    list.innerHTML += `<div class="bg-gray-950 p-3 rounded border border-gray-800 text-xs">Reported User ID: ${r.reported_user_id} - Reason: ${r.reason}</div>`;
+                });
+            }
+        }
+
+        function closeAdminModal() { document.getElementById('admin-modal').classList.add('hidden'); }
+        async function logout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
+
+        init();
+    </script>
+</body>
+</html>
