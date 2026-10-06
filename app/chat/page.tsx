@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/utils/supabase/client'
-import { Send, UserPlus, Check, X, ShieldAlert, LogOut, Search } from 'lucide-react'
+import { Send, Check, LogOut, Search, Phone, Video, ShieldAlert } from 'lucide-react'
 
 export default function ChatDashboard() {
   const [user, setUser] = useState<any>(null)
@@ -30,14 +30,9 @@ export default function ChatDashboard() {
 
   // Fetch accepted friends
   const fetchFriends = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('friendships')
-      .select(`
-        id,
-        user_id,
-        friend_id,
-        status
-      `)
+      .select('user_id, friend_id, status')
       .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
       .eq('status', 'accepted')
 
@@ -114,7 +109,7 @@ export default function ChatDashboard() {
     setPendingRequests(pendingRequests.filter(p => p.id !== senderId))
   }
 
-  // Load messages when a friend is selected
+  // Load messages and subscribe to real-time events when a friend is selected
   useEffect(() => {
     if (!selectedFriend || !user) return
 
@@ -130,7 +125,6 @@ export default function ChatDashboard() {
 
     fetchMessages()
 
-    // Real-time subscription for new messages
     const channel = supabase
       .channel('realtime-messages')
       .on(
@@ -157,7 +151,6 @@ export default function ChatDashboard() {
     }
   }, [selectedFriend, user])
 
-  // Scroll to bottom on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -182,7 +175,7 @@ export default function ChatDashboard() {
       {/* Sidebar */}
       <div className="w-80 border-r border-gray-800 flex flex-col bg-gray-950">
         <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-          <span className="font-bold text-indigo-400 truncate text-sm">@{user?.user_metadata?.username || 'User'}</span>
+          <span className="font-bold text-indigo-400 truncate text-sm">Dashboard</span>
           <button onClick={() => supabase.auth.signOut()} className="text-gray-400 hover:text-red-400">
             <LogOut size={18} />
           </button>
@@ -217,7 +210,7 @@ export default function ChatDashboard() {
           )}
         </div>
 
-        {/* Pending Requests Section */}
+        {/* Pending Requests */}
         {pendingRequests.length > 0 && (
           <div className="p-3 border-b border-gray-800 bg-gray-900/50">
             <h4 className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider mb-2">Pending Requests</h4>
@@ -258,43 +251,7 @@ export default function ChatDashboard() {
       <div className="flex-1 flex flex-col">
         {selectedFriend ? (
           <>
-            <div className="h-16 border-b border-gray-800 flex items-center px-6 bg-gray-950">
-              <h2 className="font-semibold text-base">Chat with @{selectedFriend.username}</h2>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messages.map((msg) => {
-                const isMe = msg.sender_id === user.id
-                return (
-                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs md:max-w-md px-4 py-2 rounded-lg text-sm ${isMe ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-200'}`}>
-                      {msg.content}
-                    </div>
-                  </div>
-                )
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <form onSubmit={sendMessage} className="p-4 border-t border-gray-800 bg-gray-950 flex gap-2">
-              <input 
-                type="text" 
-                placeholder="Type a message..." 
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white"
-              />
-              <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded text-sm font-medium flex items-center">
-                <Send size={16} />
-              </button>
-            </form>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
-            Select a friend from the sidebar to start chatting.
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+            {/* Header with Call, Block, and Report Controls */}
+            <div className="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-950">
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-xs mr
