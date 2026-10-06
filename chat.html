@@ -47,8 +47,6 @@
                     <h2 id="chat-friend-name" class="font-semibold text-base">@friend</h2>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="startCall('video')" class="p-2 bg-gray-800 hover:bg-gray-700 rounded-full text-indigo-400"><i data-lucide="video" class="w-5 h-5"></i></button>
-                    <button onclick="startCall('audio')" class="p-2 bg-gray-800 hover:bg-gray-700 rounded-full text-indigo-400"><i data-lucide="phone" class="w-5 h-5"></i></button>
                     <button onclick="blockCurrentFriend()" class="px-3 py-1.5 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-xs rounded">Block</button>
                     <button onclick="reportCurrentFriend()" class="p-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-400 hover:text-red-400"><i data-lucide="shield-alert" class="w-5 h-5"></i></button>
                 </div>
@@ -78,8 +76,8 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const SUPABASE_URL = 'https://vjmdwaaopgejmlxwckee.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_YE_zgqG5_HOKDon3egg1HQ_LTYd9...'; // Replace with full publishable key if truncated
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
@@ -94,8 +92,8 @@
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
             document.getElementById('current-user-label').innerText = `@${profile.username} ${profile.tag || ''}`;
 
-            // Check if user is admin (e.g. check email or specific admin flag)
-            if (profile.is_admin || user.email === 'admin@yourdomain.com') {
+            // Show admin panel button if email matches or admin flag is true
+            if (profile.is_admin || user.email === 'admin@jo-talks.com') {
                 document.getElementById('admin-btn').classList.remove('hidden');
             }
 
