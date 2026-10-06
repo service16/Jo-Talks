@@ -3,73 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jo-Talks - Chat & Dashboard</title>
+    <title>Jo-Talks - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-gray-900 text-white flex h-screen overflow-hidden">
+<body class="bg-slate-950 text-slate-100 flex h-screen overflow-hidden font-sans">
 
     <!-- SIDEBAR -->
-    <div class="w-80 border-r border-gray-800 flex flex-col bg-gray-950">
-        <div class="p-4 border-b border-gray-800 flex items-center justify-between">
-            <span id="current-user-label" class="font-bold text-indigo-400 truncate text-sm">Loading...</span>
-            <div class="flex items-center gap-2">
-                <button id="admin-btn" onclick="openAdminModal()" class="hidden text-xs bg-purple-600 px-2 py-1 rounded hover:bg-purple-500">Admin</button>
-                <button onclick="logout()" class="text-gray-400 hover:text-red-400"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+    <div class="w-80 border-r border-slate-800/80 flex flex-col bg-slate-900/50 backdrop-blur">
+        <div class="p-4 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center space-x-2 truncate">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span id="current-user-label" class="font-bold text-slate-200 truncate text-sm">Loading...</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button id="admin-btn" onclick="openAdminModal()" class="hidden text-[11px] font-semibold bg-purple-600/20 text-purple-400 border border-purple-500/30 px-2.5 py-1 rounded-lg hover:bg-purple-600 hover:text-white transition">Admin</button>
+                <button onclick="logout()" class="p-1.5 text-slate-400 hover:text-red-400 transition rounded-lg hover:bg-slate-800" title="Log Out"><i data-lucide="log-out" class="w-4 h-4"></i></button>
             </div>
         </div>
 
         <!-- Search Users -->
-        <div class="p-3 border-b border-gray-800 relative">
-            <div class="flex items-center bg-gray-900 rounded px-3 py-1.5 border border-gray-800">
-                <i data-lucide="search" class="w-4 h-4 text-gray-500 mr-2"></i>
-                <input type="text" id="search-input" placeholder="Search username..." oninput="searchUsers(this.value)" class="bg-transparent focus:outline-none text-xs w-full text-white">
+        <div class="p-3 border-b border-slate-800/80 relative">
+            <div class="flex items-center bg-slate-950 rounded-xl px-3 py-2 border border-slate-800 focus-within:border-indigo-500 transition">
+                <i data-lucide="search" class="w-4 h-4 text-slate-500 mr-2"></i>
+                <input type="text" id="search-input" placeholder="Search username..." oninput="searchUsers(this.value)" class="bg-transparent focus:outline-none text-xs w-full text-slate-200 placeholder-slate-500">
             </div>
-            <div id="search-results" class="absolute left-3 right-3 mt-1 bg-gray-900 border border-gray-800 rounded shadow-lg z-10 hidden"></div>
+            <div id="search-results" class="absolute left-3 right-3 mt-1 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-20 hidden overflow-hidden"></div>
+        </div>
+
+        <!-- Pending Requests Notification Area -->
+        <div id="pending-section" class="hidden p-3 border-b border-slate-800 bg-indigo-950/20">
+            <h4 class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Friend Requests</h4>
+            <div id="pending-list" class="space-y-2"></div>
         </div>
 
         <!-- Friends List -->
         <div class="flex-1 overflow-y-auto p-3 space-y-1">
-            <h3 class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Friends</h3>
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">Direct Messages</h3>
             <div id="friends-list" class="space-y-1"></div>
         </div>
     </div>
 
     <!-- MAIN CHAT PANEL -->
-    <div class="flex-1 flex flex-col" id="chat-panel">
-        <div id="no-chat-selected" class="flex-1 flex items-center justify-center text-gray-500 text-sm">
-            Select a friend from the sidebar to start chatting.
+    <div class="flex-1 flex flex-col bg-slate-950">
+        <div id="no-chat-selected" class="flex-1 flex flex-col items-center justify-center text-slate-500 text-sm space-y-2">
+            <div class="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 mb-2">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
+            </div>
+            <p class="font-medium text-slate-400">Select a conversation to start messaging</p>
         </div>
-        <div id="active-chat-container" class="hidden flex-1 flex flex-col">
-            <div class="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-950">
-                <div class="flex items-center">
-                    <h2 id="chat-friend-name" class="font-semibold text-base">@friend</h2>
+
+        <div id="active-chat-container" class="hidden flex-1 flex flex-col h-full">
+            <div class="h-16 border-b border-slate-800/80 flex items-center justify-between px-6 bg-slate-900/30 backdrop-blur">
+                <div class="flex items-center space-x-3">
+                    <div id="chat-friend-avatar" class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-xs text-white">?</div>
+                    <div>
+                        <h2 id="chat-friend-name" class="font-semibold text-sm text-slate-200">@friend</h2>
+                        <span class="text-[10px] text-emerald-400 font-medium flex items-center gap-1">Active Now</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="blockCurrentFriend()" class="px-3 py-1.5 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-xs rounded">Block</button>
-                    <button onclick="reportCurrentFriend()" class="p-2 bg-gray-800 hover:bg-gray-700 rounded text-gray-400 hover:text-red-400"><i data-lucide="shield-alert" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-2">
+                    <button onclick="blockCurrentFriend()" class="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-medium rounded-lg transition border border-red-500/20">Block</button>
+                    <button onclick="reportCurrentFriend()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition" title="Report User"><i data-lucide="shield-alert" class="w-4 h-4"></i></button>
                 </div>
             </div>
             
-            <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-3"></div>
 
-            <form id="message-form" onsubmit="sendMessage(event)" class="p-4 border-t border-gray-800 bg-gray-950 flex gap-2">
-                <input type="text" id="message-input" placeholder="Type a message..." required class="flex-1 bg-gray-900 border border-gray-800 rounded px-4 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded text-sm font-medium"><i data-lucide="send" class="w-4 h-4"></i></button>
+            <form id="message-form" onsubmit="sendMessage(event)" class="p-4 border-t border-slate-800/80 bg-slate-900/30 flex gap-3">
+                <input type="text" id="message-input" placeholder="Type your message here..." autocomplete="off" required class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 placeholder-slate-500 transition">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-5 py-3 rounded-xl text-sm font-semibold transition flex items-center justify-center shadow-lg shadow-indigo-600/20"><i data-lucide="send" class="w-4 h-4"></i></button>
             </form>
         </div>
     </div>
 
     <!-- ADMIN MODAL PORTAL -->
-    <div id="admin-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-900 border border-gray-800 w-[600px] h-[80vh] rounded-xl flex flex-col p-6 shadow-2xl">
-            <div class="flex justify-between items-center pb-4 border-b border-gray-800">
-                <h3 class="text-lg font-bold text-purple-400">Admin Moderation Portal</h3>
-                <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white">✕</button>
+    <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl h-[80vh] rounded-2xl flex flex-col p-6 shadow-2xl">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+                <div>
+                    <h3 class="text-base font-bold text-purple-400">Admin Moderation Portal</h3>
+                    <p class="text-xs text-slate-400">Review user reports and platform safety</p>
+                </div>
+                <button onclick="closeAdminModal()" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition">✕</button>
             </div>
-            <div class="flex-1 overflow-y-auto py-4 space-y-4">
-                <h4 class="text-xs font-semibold uppercase text-gray-400">User Reports</h4>
+            <div class="flex-1 overflow-y-auto py-4 space-y-3">
                 <div id="admin-reports-list" class="space-y-2"></div>
             </div>
         </div>
@@ -77,11 +96,13 @@
 
     <script>
         const SUPABASE_URL = 'https://vjmdwaaopgejmlxwckee.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_YE_zgqG5_HOKDon3egg1HQ_LTYd9...'; // Replace with full publishable key if truncated
+        const SUPABASE_ANON_KEY = 'sb_publishable_YE_zgqG5_HOKDon3egg1HQ_LTYd9...';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
+        let currentProfile = null;
         let selectedFriend = null;
+        let messageSubscription = null;
 
         async function init() {
             lucide.createIcons();
@@ -90,34 +111,77 @@
             currentUser = user;
 
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            currentProfile = profile;
             document.getElementById('current-user-label').innerText = `@${profile.username} ${profile.tag || ''}`;
 
-            // Show admin panel button if email matches or admin flag is true
             if (profile.is_admin || user.email === 'admin@jo-talks.com') {
                 document.getElementById('admin-btn').classList.remove('hidden');
             }
 
             fetchFriends();
+            fetchPendingRequests();
+
+            // Real-time listener for friendships & requests
+            supabase.channel('public-friendships')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
+                    fetchFriends();
+                    fetchPendingRequests();
+                })
+                .subscribe();
         }
 
         async function fetchFriends() {
             const { data } = await supabase.from('friendships').select('*').or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`).eq('status', 'accepted');
             const listEl = document.getElementById('friends-list');
             listEl.innerHTML = '';
-            if (!data) return;
+            if (!data || data.length === 0) {
+                listEl.innerHTML = `<div class="px-2 py-4 text-center text-xs text-slate-600">No friends yet. Search above to add someone!</div>`;
+                return;
+            }
 
             for (let f of data) {
                 const friendId = f.user_id === currentUser.id ? f.friend_id : f.user_id;
                 const { data: profile } = await supabase.from('profiles').select('*').eq('id', friendId).single();
                 if (profile) {
+                    const activeClass = selectedFriend?.id === profile.id ? 'bg-indigo-600/10 border-indigo-500/40 text-indigo-300' : 'hover:bg-slate-900 text-slate-300';
                     listEl.innerHTML += `
-                        <div onclick="selectFriend('${profile.id}', '${profile.username}')" class="flex items-center p-2 rounded cursor-pointer hover:bg-gray-900 transition">
-                            <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-xs mr-2">${profile.username[0].toUpperCase()}</div>
-                            <span class="text-sm font-medium">@${profile.username}</span>
+                        <div onclick="selectFriend('${profile.id}', '${profile.username}')" class="flex items-center px-3 py-2.5 rounded-xl cursor-pointer transition border border-transparent ${activeClass}">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold text-xs mr-3">${profile.username[0].toUpperCase()}</div>
+                            <span class="text-xs font-semibold tracking-wide">@${profile.username}</span>
                         </div>
                     `;
                 }
             }
+        }
+
+        async function fetchPendingRequests() {
+            const { data } = await supabase.from('friendships').select('*').eq('friend_id', currentUser.id).eq('status', 'pending');
+            const section = document.getElementById('pending-section');
+            const list = document.getElementById('pending-list');
+            list.innerHTML = '';
+
+            if (data && data.length > 0) {
+                section.classList.remove('hidden');
+                for (let req of data) {
+                    const { data: sender } = await supabase.from('profiles').select('*').eq('id', req.user_id).single();
+                    if (sender) {
+                        list.innerHTML += `
+                            <div class="flex items-center justify-between text-xs bg-slate-900 p-2 rounded-lg border border-slate-800">
+                                <span class="font-medium text-slate-300">@${sender.username}</span>
+                                <button onclick="acceptRequest('${sender.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md font-semibold transition">Accept</button>
+                            </div>
+                        `;
+                    }
+                }
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        async function acceptRequest(senderId) {
+            await supabase.from('friendships').update({ status: 'accepted' }).eq('user_id', senderId).eq('friend_id', currentUser.id);
+            fetchFriends();
+            fetchPendingRequests();
         }
 
         async function searchUsers(query) {
@@ -130,9 +194,9 @@
                 data.forEach(u => {
                     if (u.id !== currentUser.id) {
                         resultsEl.innerHTML += `
-                            <div class="flex items-center justify-between p-2 hover:bg-gray-800 border-b border-gray-800 last:border-none text-xs">
-                                <span>@${u.username}</span>
-                                <button onclick="sendFriendRequest('${u.id}')" class="px-2 py-1 bg-indigo-600 rounded">Add</button>
+                            <div class="flex items-center justify-between p-3 hover:bg-slate-800/60 border-b border-slate-800/80 last:border-none text-xs transition">
+                                <span class="font-semibold text-slate-200">@${u.username}</span>
+                                <button onclick="sendFriendRequest('${u.id}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition">Add Friend</button>
                             </div>
                         `;
                     }
@@ -142,8 +206,10 @@
 
         async function sendFriendRequest(friendId) {
             const { error } = await supabase.from('friendships').insert({ user_id: currentUser.id, friend_id: friendId, status: 'pending' });
-            if (error) alert('Already requested or friends!');
-            else alert('Friend request sent!');
+            if (error) alert('Friend request already sent or active!');
+            else alert('Friend request sent successfully!');
+            document.getElementById('search-results').classList.add('hidden');
+            document.getElementById('search-input').value = '';
         }
 
         function selectFriend(id, username) {
@@ -151,7 +217,11 @@
             document.getElementById('no-chat-selected').classList.add('hidden');
             document.getElementById('active-chat-container').classList.remove('hidden');
             document.getElementById('chat-friend-name').innerText = `@${username}`;
+            document.getElementById('chat-friend-avatar').innerText = username[0].toUpperCase();
+            
+            fetchFriends(); // update active styling in sidebar
             loadMessages();
+            setupRealtimeMessages();
         }
 
         async function loadMessages() {
@@ -159,52 +229,88 @@
             const container = document.getElementById('messages-container');
             container.innerHTML = '';
             if (data) {
-                data.forEach(m => {
-                    const isMe = m.sender_id === currentUser.id;
-                    container.innerHTML += `<div class="flex ${isMe ? 'justify-end' : 'justify-start'}"><div class="max-w-xs px-4 py-2 rounded-lg text-sm ${isMe ? 'bg-indigo-600' : 'bg-gray-800'}">${m.content}</div></div>`;
-                });
-                container.scrollTop = container.scrollHeight;
+                data.forEach(m => appendMessageToUI(m));
             }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function setupRealtimeMessages() {
+            if (messageSubscription) supabase.removeChannel(messageSubscription);
+
+            messageSubscription = supabase.channel(`chat-${selectedFriend.id}`)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+                    const msg = payload.new;
+                    if (
+                        (msg.sender_id === currentUser.id && msg.receiver_id === selectedFriend.id) ||
+                        (msg.sender_id === selectedFriend.id && msg.receiver_id === currentUser.id)
+                    ) {
+                        appendMessageToUI(msg);
+                        const container = document.getElementById('messages-container');
+                        container.scrollTop = container.scrollHeight;
+                    }
+                })
+                .subscribe();
+        }
+
+        function appendMessageToUI(msg) {
+            const container = document.getElementById('messages-container');
+            const isMe = msg.sender_id === currentUser.id;
+            container.innerHTML += `
+                <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                    <div class="max-w-xs md:max-w-md px-4 py-2.5 rounded-2xl text-xs leading-relaxed ${isMe ? 'bg-indigo-600 text-white rounded-br-none shadow-lg shadow-indigo-600/10' : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-bl-none'}">${escapeHTML(msg.content)}</div>
+                </div>
+            `;
         }
 
         async function sendMessage(e) {
             e.preventDefault();
-            const content = document.getElementById('message-input').value;
+            const input = document.getElementById('message-input');
+            const content = input.value.trim();
             if (!content || !selectedFriend) return;
-            await supabase.from('messages').insert({ sender_id: currentUser.id, receiver_id: selectedFriend.id, content });
-            document.getElementById('message-input').value = '';
-            loadMessages();
+            input.value = '';
+
+            await supabase.from('messages').insert({
+                sender_id: currentUser.id,
+                receiver_id: selectedFriend.id,
+                content: content
+            });
         }
 
         async function blockCurrentFriend() {
-            if (confirm('Block this user?')) {
-                await supabase.from('friendships').update({ status: 'blocked' }).eq('friend_id', selectedFriend.id);
+            if (confirm(`Are you sure you want to block @${selectedFriend.username}?`)) {
+                await supabase.from('friendships').update({ status: 'blocked' }).or(`and(user_id.eq.${currentUser.id},friend_id.eq.${selectedFriend.id}),and(user_id.eq.${selectedFriend.id},friend_id.eq.${currentUser.id})`);
                 location.reload();
             }
         }
 
         async function reportCurrentFriend() {
-            const reason = prompt('Reason for reporting:');
+            const reason = prompt('Please specify a reason for reporting this user:');
             if (reason) {
                 await supabase.from('reports').insert({ reporter_id: currentUser.id, reported_user_id: selectedFriend.id, reason });
-                alert('Report submitted to admin.');
+                alert('Report submitted securely to administrators.');
             }
         }
 
         async function openAdminModal() {
             document.getElementById('admin-modal').classList.remove('hidden');
-            const { data } = await supabase.from('reports').select('*');
+            const { data } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
             const list = document.getElementById('admin-reports-list');
-            list.innerHTML = data && data.length ? '' : '<p class="text-xs text-gray-500">No reports found.</p>';
+            list.innerHTML = data && data.length ? '' : '<p class="text-xs text-slate-500 text-center py-4">No active reports found.</p>';
             if (data) {
-                data.forEach(r => {
-                    list.innerHTML += `<div class="bg-gray-950 p-3 rounded border border-gray-800 text-xs">Reported User ID: ${r.reported_user_id} - Reason: ${r.reason}</div>`;
-                });
+                for (let r of data) {
+                    list.innerHTML += `
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-1">
+                            <div class="flex justify-between text-slate-400 font-medium"><span>Reported User ID: ${r.reported_user_id}</span><span>${new Date(r.created_at).toLocaleString()}</span></div>
+                            <p class="text-slate-200 font-semibold mt-1">Reason: <span class="font-normal text-slate-300">${escapeHTML(r.reason)}</span></p>
+                        </div>
+                    `;
+                }
             }
         }
 
         function closeAdminModal() { document.getElementById('admin-modal').classList.add('hidden'); }
         async function logout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
 
         init();
     </script>
