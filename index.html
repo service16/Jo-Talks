@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jo-Talks - Login & Register</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center h-screen">
@@ -40,9 +38,8 @@
     </div>
 
     <script>
-        // REPLACE WITH YOUR ACTUAL SUPABASE DETAILS
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const SUPABASE_URL = 'https://vjmdwaaopgejmlxwckee.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_YE_zgqG5_HOKDon3egg1HQ_LTYd9...'; // Replace with full publishable key if truncated
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let isSignUp = false;
