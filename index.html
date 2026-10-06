@@ -15,7 +15,7 @@
             <p id="form-subtitle" class="text-xs text-slate-400 mt-1">Real-time professional communication platform</p>
         </div>
 
-        <form id="auth-form" class="space-y-4">
+        <form id="auth-form" class="space-y-4" onsubmit="handleAuth(event)">
             <div id="username-field" class="hidden space-y-1">
                 <label class="text-xs font-semibold text-slate-400">Username</label>
                 <input type="text" id="username" placeholder="johndoe" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition text-white">
@@ -32,7 +32,7 @@
         </form>
 
         <div class="text-center mt-6">
-            <button type="button" id="toggle-btn" class="text-xs text-indigo-400 hover:text-indigo-300 transition font-medium">Don't have an account? Create one</button>
+            <button type="button" onclick="toggleMode()" id="toggle-btn" class="text-xs text-indigo-400 hover:text-indigo-300 transition font-medium">Don't have an account? Create one</button>
         </div>
     </div>
 
@@ -43,9 +43,9 @@
 
         let isSignUp = false;
 
-        document.getElementById('toggle-btn').addEventListener('click', () => {
+        function toggleMode() {
             isSignUp = !isSignUp;
-            document.getElementById('form-subtitle').innerText = isSignUp ? 'Create your secure account' : 'Real-time professional communication platform';
+            document.getElementById('form-subtitleinnerText' || 'form-subtitle').innerText = isSignUp ? 'Create your secure account' : 'Real-time professional communication platform';
             document.getElementById('submit-btn').innerText = isSignUp ? 'Create Account' : 'Sign In';
             document.getElementById('toggle-btn').innerText = isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one";
             
@@ -55,9 +55,9 @@
             } else {
                 usernameField.classList.add('hidden');
             }
-        });
+        }
 
-        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+        async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -101,7 +101,7 @@
                 alert('An unexpected error occurred: ' + err.message);
                 btn.disabled = false;
             }
-        });
+        }
     </script>
 </body>
 </html>
