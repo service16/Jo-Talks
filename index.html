@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jo-Talks - Login & Register</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center h-screen">
+
+    <div class="bg-gray-950 p-8 rounded-xl border border-gray-800 w-96 shadow-xl">
+        <h2 id="form-title" class="text-xl font-bold text-indigo-400 text-center mb-6">Log In to Jo-Talks</h2>
+
+        <form id="auth-form" class="space-y-4">
+            <div id="username-field" class="hidden">
+                <label class="text-xs text-gray-400">Username</label>
+                <input type="text" id="username" placeholder="johndoe" class="w-full mt-1 bg-gray-900 border border-gray-800 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white">
+            </div>
+            <div id="tag-field" class="hidden">
+                <label class="text-xs text-gray-400">Tag (e.g. #0001)</label>
+                <input type="text" id="tag" placeholder="#0001" class="w-full mt-1 bg-gray-900 border border-gray-800 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white">
+            </div>
+            <div>
+                <label class="text-xs text-gray-400">Email</label>
+                <input type="email" id="email" placeholder="you@example.com" required class="w-full mt-1 bg-gray-900 border border-gray-800 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white">
+            </div>
+            <div>
+                <label class="text-xs text-gray-400">Password</label>
+                <input type="password" id="password" placeholder="••••••••" required class="w-full mt-1 bg-gray-900 border border-gray-800 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-white">
+            </div>
+            <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded text-sm font-semibold transition">Log In</button>
+        </form>
+
+        <div class="text-center mt-4">
+            <button onclick="toggleMode()" id="toggle-btn" class="text-xs text-indigo-400 hover:underline">Don't have an account? Sign up</button>
+        </div>
+    </div>
+
+    <script>
+        // REPLACE WITH YOUR ACTUAL SUPABASE DETAILS
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let isSignUp = false;
+
+        function toggleMode() {
+            isSignUp = !isSignUp;
+            document.getElementById('form-title').innerText = isSignUp ? 'Create an Account' : 'Log In to Jo-Talks';
+            document.getElementById('submit-btn').innerText = isSignUp ? 'Sign Up' : 'Log In';
+            document.getElementById('toggle-btn').innerText = isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up";
+            document.getElementById('username-field').classList.toggle('hidden', !isSignUp);
+            document.getElementById('tag-field').classList.toggle('hidden', !isSignUp);
+        }
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (isSignUp) {
+                const username = document.getElementById('username').value;
+                const tag = document.getElementById('tag').value;
+                const { error } = await supabase.auth.signUp({
+                    email, password,
+                    options: { data: { username, tag } }
+                });
+                if (error) alert(error.message);
+                else {
+                    alert('Registration successful! Check your email or log in now.');
+                    toggleMode();
+                }
+            } else {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) alert(error.message);
+                else window.location.href = 'chat.html';
+            }
+        });
+    </script>
+</body>
+</html>
