@@ -32,7 +32,7 @@
         </form>
 
         <div class="text-center mt-6">
-            <button type="button" onclick="toggleMode()" id="toggle-btn" class="text-xs text-indigo-400 hover:text-indigo-300 transition font-medium">Don't have an account? Create one</button>
+            <button type="button" id="toggle-btn" class="text-xs text-indigo-400 hover:text-indigo-300 transition font-medium">Don't have an account? Create one</button>
         </div>
     </div>
 
@@ -43,13 +43,19 @@
 
         let isSignUp = false;
 
-        function toggleMode() {
+        document.getElementById('toggle-btn').addEventListener('click', () => {
             isSignUp = !isSignUp;
             document.getElementById('form-subtitle').innerText = isSignUp ? 'Create your secure account' : 'Real-time professional communication platform';
             document.getElementById('submit-btn').innerText = isSignUp ? 'Create Account' : 'Sign In';
             document.getElementById('toggle-btn').innerText = isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Create one";
-            document.getElementById('username-field').classList.toggle('hidden', !isSignUp);
-        }
+            
+            const usernameField = document.getElementById('username-field');
+            if (isSignUp) {
+                usernameField.classList.remove('hidden');
+            } else {
+                usernameField.classList.add('hidden');
+            }
+        });
 
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -80,8 +86,7 @@
                         btn.disabled = false;
                     } else {
                         alert('Account created successfully! You can now sign in.');
-                        toggleMode();
-                        btn.disabled = false;
+                        window.location.reload();
                     }
                 } else {
                     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
